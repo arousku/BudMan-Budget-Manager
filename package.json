@@ -15,6 +15,7 @@
     "chart.js": "^2.9.3",
     "cross-env": "^7.0.2",
     "electron-is-dev": "^1.2.0",
+    "jshashes": "^1.0.8",
     "json-merger": "^1.1.2",
     "react": "^16.13.1",
     "react-chartjs-2": "^2.9.0",

@@ -24,6 +24,11 @@ class Parser extends Component {
     //data = result;
     //console.log(data);
 
+    // GENERATE HASH FROM FILE CONTENT
+    var Hashes = require('jshashes')
+    var MD5 = new Hashes.MD5().hex(result);
+    console.log("MD5: " + MD5);
+
     // NORDEA FILE -> JSON
     var fileName = this.state.fileName;
     //console.log("filename in storeResults: " + fileName);
@@ -49,12 +54,19 @@ class Parser extends Component {
     const fs = app.require('fs');
 
     try {
+      // CALL HASH STORING FUNCTION
+      this.storeHash(MD5);
+
+      // IF JSON EXISTS
       if (fs.existsSync("./output.json")) {
         jsonContent = JSON.stringify({ [accountNumber]: {[fileName]: out} });
         //console.log(jsonContent);
         var contentParsed = JSON.parse(jsonContent);
         console.log(contentParsed);
-        // IF JSON EXISTS
+        // IF STOREHASH RETURNS TRUE
+          // CONTINUE
+          // LOG 
+        //ELSE
         // MERGE DATA TO JSON OUTPUT
         console.log("file exists!");
         
@@ -90,9 +102,10 @@ class Parser extends Component {
 
 
       }
+      // IF JSON DOES NOT EXIST
+      // SAVE JSON
       else {
-        // IF JSON DOES NOT EXIST
-        // SAVE JSON
+
         jsonContent = JSON.stringify({ Tili: [ {[accountNumber]: {[fileName]: out} }]});
         console.log("file doesn't exist!");
         fs.writeFile("output.json", jsonContent, 'utf8', function (err) {
@@ -106,6 +119,18 @@ class Parser extends Component {
     } catch(err) {
       console.error(err)
     }
+  }
+
+  storeHash(checkSum){
+    // IF CHECKSUM FILE EXISTS, LOOP ARRAY 
+      // IF ARRAY[i] == CHECKSUM
+        // RETURN TRUE
+      // ELSE
+        // APPEND
+        // RETURN FALSE
+    // IF CHECKSUM FILE DOESN'T EXIST, CREATE IT
+      // APPEND
+      // RETURN FALSE
   }
 
   render() {
