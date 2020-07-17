@@ -1,4 +1,6 @@
 import React, { Component } from "react";
+var app = window.require('electron').remote;
+const fs = app.require('fs');
 
 class Parser extends Component {
   constructor(props) {
@@ -48,26 +50,24 @@ class Parser extends Component {
     });
     out.pop(); // remove last empty object
     var jsonContent;
-    console.log(jsonContent);
-
-    var app = window.require('electron').remote;
-    const fs = app.require('fs');
+    //console.log(jsonContent);
 
     try {
-      // CALL HASH STORING FUNCTION
-      this.storeHash(MD5);
-
+    var hashBool = this.storeHash(MD5);
+    console.log("hashbool = " + hashBool);
+      // CALL HASH STORING FUNCTION      
+    if (this.storeHash(MD5)){
+      console.log("Hash found, skipping JSON append")
+    }
+    else {
+      //console.log("this.storeHash(MD5): " + this.storeHash(MD5));
       // IF JSON EXISTS
       if (fs.existsSync("./output.json")) {
-        jsonContent = JSON.stringify({ [accountNumber]: {[fileName]: out} });
+        jsonContent = JSON.stringify({ [accountNumber]: out});
         //console.log(jsonContent);
         var contentParsed = JSON.parse(jsonContent);
         console.log(contentParsed);
-        // IF STOREHASH RETURNS TRUE
-          // CONTINUE
-          // LOG 
-        //ELSE
-        // MERGE DATA TO JSON OUTPUT
+
         console.log("file exists!");
         
         fs.readFile("./output.json", "utf8", function readFileCallback(err, existingData){
@@ -106,7 +106,7 @@ class Parser extends Component {
       // SAVE JSON
       else {
 
-        jsonContent = JSON.stringify({ Tili: [ {[accountNumber]: {[fileName]: out} }]});
+        jsonContent = JSON.stringify({ Tili: [ {[accountNumber]: out }]});
         console.log("file doesn't exist!");
         fs.writeFile("output.json", jsonContent, 'utf8', function (err) {
           if (err) {
@@ -116,21 +116,58 @@ class Parser extends Component {
           console.log("JSON file has been saved.");
         }); 
       }
+    }
     } catch(err) {
       console.error(err)
     }
   }
 
   storeHash(checkSum){
+    var match = false;
     // IF CHECKSUM FILE EXISTS, LOOP ARRAY 
-      // IF ARRAY[i] == CHECKSUM
-        // RETURN TRUE
-      // ELSE
-        // APPEND
-        // RETURN FALSE
-    // IF CHECKSUM FILE DOESN'T EXIST, CREATE IT
-      // APPEND
-      // RETURN FALSE
+    if (fs.existsSync("./checksum.txt")) {
+      console.log("checksumfile exists!");
+      fs.readFile("./checksum.txt", "utf8", function (err, existingData){
+        if (err){
+          console.log(err);
+        } else {
+          console.log("existing data: " + existingData.toString());
+          var obj = existingData.toString();
+          console.log(obj);
+          var array = obj.split(',');
+          for (var i = 0; i < obj.length; i++){
+            if (array[i] === checkSum){
+              match = true;
+              break;
+            }
+          }
+            if(!match){
+              array.push(checkSum);
+              fs.writeFile("checksum.txt", array, 'utf8', function (err) {
+                if (err) {
+                  console.log("An error occured while pushing array to checksum file.");
+                  return console.log(err);
+                }
+                console.log("TXT file has been saved.");
+              }); 
+            }
+          console.log("match = " + match);
+          return match;
+        }
+      });
+    }
+    else {
+      // IF CHECKSUM FILE DOESN'T EXIST, CREATE IT
+      fs.writeFile("checksum.txt", checkSum, "utf8", function (err) {
+        if (err) {
+          console.log("An error occured while writing checksum file.");
+          return console.log(err);
+        }
+        console.log("TXT file has been created.");
+      }); 
+      console.log("match = " + match);
+      return match;
+    }
   }
 
   render() {
