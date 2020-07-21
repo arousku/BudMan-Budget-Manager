@@ -14,12 +14,35 @@ class Parser extends Component {
 
   handleChangeFile(e) {
     const file = e.target.files[0];
+    console.log("filetype = " + file.type);
     let reader = new FileReader();
-    reader.onload = () => this.storeResults(reader.result);
-    reader.readAsText(file);
-    this.setState({
-      fileName: file.name,
+    if (file.type === "text/plain"){
+      console.log("nordea");
+      reader.onload = () => this.storeResults(reader.result);
+      reader.readAsText(file);
+    }
+    else {
+      console.log("OP");
+      reader.onload = () => this.storeOP(reader.result);
+      reader.readAsText(file, 'windows-1252');
+    }
+    //
+  }
+
+  storeOP(result) {
+    const data = result.replace(/;/g, "\n")
+    var cells = data.split("\n").map(function (el) {
+      return el.split(/\t/);
+    }); 
+    const arrayFilter = cells.filter(el => {
+      return el != null && el != "" && el != " " && el != '""';
     });
+    console.log(arrayFilter);
+    const accountNumber = arrayFilter[10];
+    console.log(accountNumber);
+    var shift = arrayFilter.splice(0, 15);
+    console.log(shift);
+    console.log(arrayFilter);
   }
 
   async storeResults(result) {
@@ -27,6 +50,7 @@ class Parser extends Component {
     //console.log(data);
 
     // GENERATE HASH FROM FILE CONTENT
+    // THIS PART IS GOING TO REPEAT, SEPARATE FROM THIS FUNCTION
     var Hashes = require("jshashes");
     var MD5 = new Hashes.MD5().hex(result);
     console.log("MD5: " + MD5);
@@ -178,7 +202,7 @@ class Parser extends Component {
         <input
           type="file"
           id="myFile"
-          accept=".txt"
+          accept=".txt,.csv"
           onChange={(e) => this.handleChangeFile(e)}
         />
       </div>
@@ -225,5 +249,5 @@ fs.writeFile("output.json", jsonContent, 'utf8', function (err) {
 
 // TODO
 // Append under existing account number
-// OP formatting
+// OP formatting -> Message and reference as own elements
 // check file suitability
