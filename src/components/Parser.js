@@ -35,14 +35,81 @@ class Parser extends Component {
       return el.split(/\t/);
     }); 
     const arrayFilter = cells.filter(el => {
-      return el != null && el != "" && el != " " && el != '""';
+      // eslint-disable-next-line eqeqeq
+      return el != null && el != "" && el != " ";
     });
-    console.log(arrayFilter);
-    const accountNumber = arrayFilter[10];
+    const accountNumber = arrayFilter[11];
     console.log(accountNumber);
-    var shift = arrayFilter.splice(0, 15);
-    console.log(shift);
+    var shift = arrayFilter.splice(0, 25);
     console.log(arrayFilter);
+    console.log(/^\s*(3[01]|[12][0-9]|0?[1-9])\.(1[012]|0?[1-9])\.((?:19|20)\d{2})\s*$/g.test(arrayFilter[0])); //DD.MM.YYYY regex
+    /*
+
+    ALL TRANSACTIONS ARE THE SAME SIZE, INCLUDE EMPTY CELLS AND MANUALLY CREATE OBJECT FROM ARRAYS
+    NO NEED FOR THIS IN THE BOTTOM!
+
+    new array
+    DO {
+      append inner array
+      append object: { "Kirjauspäivä":arrayFilter[0], "Arvopäivä":arrayFilter[4], "Maksupäivä":"", "Määrä":arrayFilter[1], "Saaja/Maksaja":arrayFilter[5], "Tilinumero":arrayFilter[6]  } 
+      var i = 8;
+      if arrayFilter[7] == '"Viesti"' {
+        all arrays after viesti as singular object value until BIC or date is reached
+        var messageArray = [];
+        while (arrayFilter[i] != BIC || arrayFilter[i] != regex) {
+          messageArray.push(arrayFilter[i]);
+          i++;
+        }
+        append object: { "Viesti":messageArray.join(" ") }
+      }
+      while (arrayFilter[i] != regex) {
+        if (arrayFilter[i] == BIC) {
+          append object: { "BIC":arrayFilter[i] }
+        }
+        i++
+      }
+    arrayFilter.splice(0, [i])
+    }
+    WHILE (regex == true)
+
+    /*
+    myObj = { "name":"John", "age":30, "car":null };
+    x = myObj.name;
+    */
+    //console.log(mergeArray);
+
+    /*
+      Create following object:
+      0: Kirjauspäivä   -> 0:
+      1: Arvopäivä      -> 4:
+      2: Maksupäivä     -> -
+      3: Määrä          -> 1:
+      4: Saaja/Maksaja  -> 5:
+      5: Tilinumero     -> 6: 
+      6: BIC            -> 7:
+      7: Tapahtuma      -> 2[0]
+      8: Viite          -> 2[1]
+      9: Maksajan viite -> -
+      10: Viesti        -> 5???
+      11: Kortinnumero  -> 5???
+      12: Kuitti        -> -
+    */
+
+    
+    //var mergeArray = arrayFilter[0];
+    var i = 0
+    do {
+      console.log(i);
+      console.log(arrayFilter[i]);
+      if (arrayFilter[i] == '"Viesti:"') { 
+        break; 
+      }
+      else { 
+        i++;
+      }
+    }
+    while (i < 20);
+
   }
 
   async storeResults(result) {
@@ -249,5 +316,5 @@ fs.writeFile("output.json", jsonContent, 'utf8', function (err) {
 
 // TODO
 // Append under existing account number
-// OP formatting -> Message and reference as own elements
+// OP formatting -> Message and reference as own elements, make array of arrays because multi-line messages because OP formatting, every item has several empty rows, use this.
 // check file suitability
