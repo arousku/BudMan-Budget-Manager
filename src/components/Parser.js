@@ -31,10 +31,16 @@ class Parser extends Component {
 
   storeOP(result) {
     const data = result.replace(/;/g, "\n")
-    var cells = data.split("\n").map(function (el) {
-      return el.split(/\t/);
-    }); 
-    const arrayFilter = cells.filter(el => {
+    var result = [];
+    var cells = data.split("\n");
+    cells.forEach(element => {
+      var strings = element.split(/\t/);
+      strings.forEach(el => {
+        result.push(el);
+      })
+    });
+
+    const arrayFilter = result.filter(el => {
       // eslint-disable-next-line eqeqeq
       return el != null && el != "" && el != " ";
     });
@@ -42,11 +48,58 @@ class Parser extends Component {
     console.log(accountNumber);
     var shift = arrayFilter.splice(0, 25);
     console.log(arrayFilter);
-    console.log(/^\s*(3[01]|[12][0-9]|0?[1-9])\.(1[012]|0?[1-9])\.((?:19|20)\d{2})\s*$/g.test(arrayFilter[0])); //DD.MM.YYYY regex
-    /*
 
+    var transactionArray = [];
+
+    while (/^\s*(3[01]|[12][0-9]|0?[1-9])\.(1[012]|0?[1-9])\.((?:19|20)\d{2})\s*$/g.test(arrayFilter[0])) {
+      console.log(/^\s*(3[01]|[12][0-9]|0?[1-9])\.(1[012]|0?[1-9])\.((?:19|20)\d{2})\s*$/g.test(arrayFilter[0])); //DD.MM.YYYY regex
+
+      // If account number is missing, BIC will be missing too. Add empty elements to array.
+      if (arrayFilter[6] == '"Viesti:"' || arrayFilter[6] == '""') {
+        arrayFilter.splice(6, 0, "");
+        arrayFilter.splice(8, 0, "");
+      }
+
+      // Stitch message together
+      var messageString = arrayFilter[7] + " " + arrayFilter[9] + " " + arrayFilter[10] + " " + arrayFilter[11] + " " + arrayFilter[12]; 
+      messageString = messageString.replace(/\s+/g,' ').trim();   // remove extra whitespace from message
+      messageString = messageString.replace(/"/g,"").trim();      // remove double quotes from message
+
+      var transactionObject = { "Kirjauspäivä":arrayFilter[0], "Arvopäivä":arrayFilter[4], "Maksupäivä":"", "Määrä":arrayFilter[1], "Saaja/Maksaja":arrayFilter[5].replace(/\s+/g,' ').trim(), 
+      "Tilinumero":arrayFilter[6], "BIC":arrayFilter[8], "Tapahtuma":arrayFilter[2].replace(/"/g,"").trim(), // includes reference number, unsure which one so kept here
+      "Viite":"", "Maksajan viite:":"", "Viesti":messageString, "Kortinnumero":"", "Kuitti":"" }
+  
+      transactionArray.push(transactionObject);
+
+      //console.log(arrayFilter)
+      shift = arrayFilter.splice(0, 13);
+      //console.log(arrayFilter)
+    }
+    
+    // { Tili: [{ [accountNumber]: out }] }
+
+
+
+    console.log(transactionArray);
+
+    /*
     ALL TRANSACTIONS ARE THE SAME SIZE, INCLUDE EMPTY CELLS AND MANUALLY CREATE OBJECT FROM ARRAYS
-    NO NEED FOR THIS IN THE BOTTOM!
+
+    new array
+    DO {
+      // Message split to multiple arrays in OP
+      var messageString = arrayFilter[7] + " " + arrayFilter[9] + " " + arrayFilter[10] + " " + arrayFilter[11] + " " + arrayFilter[12]; // these are arrays, cannot slice like strings
+      messageString = messageString.replace(/"/g,""); // remove all double quotes
+      messageString = messageString.trim();           // trim whitespaces
+      messageString = '"' + messageString + '"';      // add outer quotes back
+
+      append object: { "Kirjauspäivä":arrayFilter[0], "Arvopäivä":arrayFilter[4], "Maksupäivä":"", "Määrä":arrayFilter[1], "Saaja/Maksaja":arrayFilter[5], "Tilinumero":arrayFilter[6], 
+      "BIC":arrayFilter[8], "Tapahtuma":arrayFilter[2], // includes reference number, unsure which one so kept here
+      "Viite":"", "Maksajan viite:":"", "Viesti":messageString, "Kortinnumero":"", "Kuitti":""  } 
+    }
+    WHILE (regex == true)
+
+    NO NEED FOR THIS!
 
     new array
     DO {
@@ -71,6 +124,8 @@ class Parser extends Component {
     arrayFilter.splice(0, [i])
     }
     WHILE (regex == true)
+    new object, accountnumber: [ARRAY]
+
 
     /*
     myObj = { "name":"John", "age":30, "car":null };
@@ -93,7 +148,7 @@ class Parser extends Component {
       10: Viesti        -> 5???
       11: Kortinnumero  -> 5???
       12: Kuitti        -> -
-    */
+    
 
     
     //var mergeArray = arrayFilter[0];
@@ -101,15 +156,11 @@ class Parser extends Component {
     do {
       console.log(i);
       console.log(arrayFilter[i]);
-      if (arrayFilter[i] == '"Viesti:"') { 
-        break; 
-      }
-      else { 
-        i++;
-      }
+      i++;
+      
     }
-    while (i < 20);
-
+    while (i < 60);
+*/
   }
 
   async storeResults(result) {
