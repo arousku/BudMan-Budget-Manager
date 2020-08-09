@@ -44,8 +44,11 @@ class Parser extends Component {
       // eslint-disable-next-line eqeqeq
       return el != null && el != "" && el != " ";
     });
-    const accountNumber = arrayFilter[11];
+    var accountNumber = arrayFilter[11];
     console.log(accountNumber);
+    accountNumber = accountNumber.replace(/\s+/g,'');   // remove extra whitespace from accountNumber
+    console.log(accountNumber);
+
     var shift = arrayFilter.splice(0, 25);
     console.log(arrayFilter);
 
@@ -81,6 +84,10 @@ class Parser extends Component {
 
 
     console.log(transactionArray);
+    var accountObject = { [accountNumber]:transactionArray };
+    console.log(accountObject);
+    var accountArray = []
+    var accounts = {}
 
     /*
     ALL TRANSACTIONS ARE THE SAME SIZE, INCLUDE EMPTY CELLS AND MANUALLY CREATE OBJECT FROM ARRAYS
