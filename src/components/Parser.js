@@ -6,7 +6,7 @@ class Parser extends Component {
   constructor(props) {
     super(props);
     this.handleChangeFile = this.handleChangeFile.bind(this);
-    this.storeResults = this.storeResults.bind(this);
+    this.storeNordea = this.storeNordea.bind(this);
     this.state = {
       fileName: "",
     };
@@ -18,7 +18,7 @@ class Parser extends Component {
     let reader = new FileReader();
     if (file.type === "text/plain"){
       console.log("nordea");
-      reader.onload = () => this.storeResults(reader.result);
+      reader.onload = () => this.storeNordea(reader.result);
       reader.readAsText(file);
     }
     else {
@@ -26,21 +26,20 @@ class Parser extends Component {
       reader.onload = () => this.storeOP(reader.result);
       reader.readAsText(file, 'windows-1252');
     }
-    //
   }
 
   storeOP(result) {
     const data = result.replace(/;/g, "\n")
-    var result = [];
+    var resultArray = [];
     var cells = data.split("\n");
     cells.forEach(element => {
       var strings = element.split(/\t/);
       strings.forEach(el => {
-        result.push(el);
+        resultArray.push(el);
       })
     });
 
-    const arrayFilter = result.filter(el => {
+    const arrayFilter = resultArray.filter(el => {
       // eslint-disable-next-line eqeqeq
       return el != null && el != "" && el != " ";
     });
@@ -81,64 +80,11 @@ class Parser extends Component {
     
     // { Tili: [{ [accountNumber]: out }] }
 
-
-
     console.log(transactionArray);
     var accountObject = { [accountNumber]:transactionArray };
     console.log(accountObject);
     var accountArray = []
     var accounts = {}
-
-    /*
-    ALL TRANSACTIONS ARE THE SAME SIZE, INCLUDE EMPTY CELLS AND MANUALLY CREATE OBJECT FROM ARRAYS
-
-    new array
-    DO {
-      // Message split to multiple arrays in OP
-      var messageString = arrayFilter[7] + " " + arrayFilter[9] + " " + arrayFilter[10] + " " + arrayFilter[11] + " " + arrayFilter[12]; // these are arrays, cannot slice like strings
-      messageString = messageString.replace(/"/g,""); // remove all double quotes
-      messageString = messageString.trim();           // trim whitespaces
-      messageString = '"' + messageString + '"';      // add outer quotes back
-
-      append object: { "Kirjauspäivä":arrayFilter[0], "Arvopäivä":arrayFilter[4], "Maksupäivä":"", "Määrä":arrayFilter[1], "Saaja/Maksaja":arrayFilter[5], "Tilinumero":arrayFilter[6], 
-      "BIC":arrayFilter[8], "Tapahtuma":arrayFilter[2], // includes reference number, unsure which one so kept here
-      "Viite":"", "Maksajan viite:":"", "Viesti":messageString, "Kortinnumero":"", "Kuitti":""  } 
-    }
-    WHILE (regex == true)
-
-    NO NEED FOR THIS!
-
-    new array
-    DO {
-      append inner array
-      append object: { "Kirjauspäivä":arrayFilter[0], "Arvopäivä":arrayFilter[4], "Maksupäivä":"", "Määrä":arrayFilter[1], "Saaja/Maksaja":arrayFilter[5], "Tilinumero":arrayFilter[6]  } 
-      var i = 8;
-      if arrayFilter[7] == '"Viesti"' {
-        all arrays after viesti as singular object value until BIC or date is reached
-        var messageArray = [];
-        while (arrayFilter[i] != BIC || arrayFilter[i] != regex) {
-          messageArray.push(arrayFilter[i]);
-          i++;
-        }
-        append object: { "Viesti":messageArray.join(" ") }
-      }
-      while (arrayFilter[i] != regex) {
-        if (arrayFilter[i] == BIC) {
-          append object: { "BIC":arrayFilter[i] }
-        }
-        i++
-      }
-    arrayFilter.splice(0, [i])
-    }
-    WHILE (regex == true)
-    new object, accountnumber: [ARRAY]
-
-
-    /*
-    myObj = { "name":"John", "age":30, "car":null };
-    x = myObj.name;
-    */
-    //console.log(mergeArray);
 
     /*
       Create following object:
@@ -155,31 +101,10 @@ class Parser extends Component {
       10: Viesti        -> 5???
       11: Kortinnumero  -> 5???
       12: Kuitti        -> -
-    
-
-    
-    //var mergeArray = arrayFilter[0];
-    var i = 0
-    do {
-      console.log(i);
-      console.log(arrayFilter[i]);
-      i++;
-      
-    }
-    while (i < 60);
-*/
+      */
   }
 
-  async storeResults(result) {
-    //data = result;
-    //console.log(data);
-
-    // GENERATE HASH FROM FILE CONTENT
-    // THIS PART IS GOING TO REPEAT, SEPARATE FROM THIS FUNCTION
-    var Hashes = require("jshashes");
-    var MD5 = new Hashes.MD5().hex(result);
-    console.log("MD5: " + MD5);
-
+  async storeNordea(result) {
     // NORDEA FILE -> JSON
     //var fileName = this.state.fileName;
     //console.log("filename in storeResults: " + fileName);
@@ -201,9 +126,17 @@ class Parser extends Component {
       return obj;
     });
     out.pop(); // remove last empty object
-    var jsonContent;
-    //console.log(jsonContent);
+    var accountObject = { [accountNumber]: out };
+    this.storeAccount(accountObject, result)
+  }
 
+  async storeAccount(accountObject, result) {
+    var jsonContent;
+    // GENERATE HASH FROM FILE CONTENT
+    // THIS PART IS GOING TO REPEAT, SEPARATE FROM THIS FUNCTION
+    var Hashes = require("jshashes");
+    var MD5 = new Hashes.MD5().hex(result);
+    console.log("MD5: " + MD5);
     try {
       var hashBool = await this.storeHash(MD5);
       console.log("hashbool = " + hashBool);
@@ -214,7 +147,7 @@ class Parser extends Component {
         //console.log("this.storeHash(MD5): " + this.storeHash(MD5));
         // IF JSON EXISTS
         if (fs.existsSync("./output.json")) {
-          jsonContent = JSON.stringify({ [accountNumber]: out });
+          jsonContent = JSON.stringify(accountObject);
           //console.log(jsonContent);
           var contentParsed = JSON.parse(jsonContent);
           console.log(contentParsed);
@@ -228,6 +161,7 @@ class Parser extends Component {
             if (err) {
               console.log(err);
             } else {
+              // TODO IF ACCOUNT EXISTS!!
               var obj = JSON.parse(existingData);
               obj.Tili.push(contentParsed);
               console.log(obj);
@@ -261,7 +195,7 @@ class Parser extends Component {
         // IF JSON DOES NOT EXIST
         // SAVE JSON
         else {
-          jsonContent = JSON.stringify({ Tili: [{ [accountNumber]: out }] });
+          jsonContent = JSON.stringify({ Tili: [accountObject] });
           console.log("file doesn't exist!");
           fs.writeFile("output.json", jsonContent, "utf8", function (err) {
             if (err) {
@@ -337,42 +271,7 @@ class Parser extends Component {
 
 export default Parser;
 
-// FILE TO READ
-//
-//var data = fs.readFileSync('TestFile.txt', 'utf8');
-//console.log(data);
-/*
-// NORDEA FILE -> JSON
-//var cells = data.split('\n\r\n').map(function (el) { return el.split(/\t/); }); // split data into arrays and further into elements
-//console.log(cells);
-var account = cells.shift();
-var accountNumber = account[1];
-var headings = cells.shift();
-//console.log(headings);
-var out = cells.map(function (el) {
-  var obj = {};
-  for (var i = 0, l = el.length-1; i < l; i++) {  // el.length-1 to remove last empty element. Ghetto solution, i know
-    obj[headings[i]] = isNaN(Number(el[i])) ? el[i] : +el[i];
-    }
-  return obj;
-});
-out.pop(); // remove last empty object
-var jsonContent = JSON.stringify({ [accountNumber]: out });
-console.log(jsonContent);
-
-// SAVE JSON
-var fs = require('fs');
-fs.writeFile("output.json", jsonContent, 'utf8', function (err) {
-  if (err) {
-      console.log("An error occured while writing JSON Object to File.");
-      return console.log(err);
-  }
-
-  console.log("JSON file has been saved.");
-}); 
-*/
-
 // TODO
+// Separate appending to its own function
 // Append under existing account number
-// OP formatting -> Message and reference as own elements, make array of arrays because multi-line messages because OP formatting, every item has several empty rows, use this.
 // check file suitability
