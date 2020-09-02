@@ -67,26 +67,7 @@ class Parser extends Component {
       messageString = messageString.replace(/\s+/g,' ').trim();   // remove extra whitespace from message
       messageString = messageString.replace(/"/g,"").trim();      // remove double quotes from message
 
-      var transactionObject = { "Kirjauspäivä":arrayFilter[0], "Arvopäivä":arrayFilter[4], "Maksupäivä":"", "Määrä":arrayFilter[1], "Saaja/Maksaja":arrayFilter[5].replace(/\s+/g,' ').trim(), 
-      "Tilinumero":arrayFilter[6], "BIC":arrayFilter[8], "Tapahtuma":arrayFilter[2].replace(/"/g,"").trim(), // includes reference number, unsure which one so kept here
-      "Viite":"", "Maksajan viite:":"", "Viesti":messageString, "Kortinnumero":"", "Kuitti":"" }
-  
-      transactionArray.push(transactionObject);
-
-      //console.log(arrayFilter)
-      shift = arrayFilter.splice(0, 13);
-      //console.log(arrayFilter)
-    }
-    
-    // { Tili: [{ [accountNumber]: out }] }
-
-    console.log(transactionArray);
-    var accountObject = { [accountNumber]:transactionArray };
-    console.log(accountObject);
-    var accountArray = []
-    var accounts = {}
-
-    /*
+      /*
       Create following object:
       0: Kirjauspäivä   -> 0:
       1: Arvopäivä      -> 4:
@@ -102,6 +83,21 @@ class Parser extends Component {
       11: Kortinnumero  -> 5???
       12: Kuitti        -> -
       */
+
+      var transactionObject = { "Kirjauspäivä":arrayFilter[0], "Arvopäivä":arrayFilter[4], "Maksupäivä":"", "Määrä":arrayFilter[1], "Saaja/Maksaja":arrayFilter[5].replace(/\s+/g,' ').trim(), 
+      "Tilinumero":arrayFilter[6], "BIC":arrayFilter[8], "Tapahtuma":arrayFilter[2].replace(/"/g,"").trim(), // includes reference number, unsure which one so kept here
+      "Viite":"", "Maksajan viite:":"", "Viesti":messageString, "Kortinnumero":"", "Kuitti":"" }
+  
+      transactionArray.push(transactionObject);
+
+      shift = arrayFilter.splice(0, 13);
+      //console.log(arrayFilter)
+    }
+
+    console.log(transactionArray);
+    var accountObject = { [accountNumber]:transactionArray };
+    console.log(accountObject);
+    this.storeAccount(accountObject, result)
   }
 
   async storeNordea(result) {
@@ -120,7 +116,7 @@ class Parser extends Component {
     var out = cells.map(function (el) {
       var obj = {};
       for (var i = 0, l = el.length - 1; i < l; i++) {
-        // el.length-1 to remove last empty element. Ghetto solution, i know
+        // el.length-1 to remove last empty element
         obj[headings[i]] = isNaN(Number(el[i])) ? el[i] : +el[i];
       }
       return obj;
@@ -133,7 +129,6 @@ class Parser extends Component {
   async storeAccount(accountObject, result) {
     var jsonContent;
     // GENERATE HASH FROM FILE CONTENT
-    // THIS PART IS GOING TO REPEAT, SEPARATE FROM THIS FUNCTION
     var Hashes = require("jshashes");
     var MD5 = new Hashes.MD5().hex(result);
     console.log("MD5: " + MD5);
@@ -148,10 +143,9 @@ class Parser extends Component {
         // IF JSON EXISTS
         if (fs.existsSync("./output.json")) {
           jsonContent = JSON.stringify(accountObject);
-          //console.log(jsonContent);
+
           var contentParsed = JSON.parse(jsonContent);
           console.log(contentParsed);
-
           console.log("file exists!");
 
           fs.readFile("./output.json", "utf8", function readFileCallback(
@@ -161,9 +155,24 @@ class Parser extends Component {
             if (err) {
               console.log(err);
             } else {
-              // TODO IF ACCOUNT EXISTS!!
-              var obj = JSON.parse(existingData);
-              obj.Tili.push(contentParsed);
+              // TODO if account exists
+              const numberToCompare = Object.keys(accountObject);
+              const obj = JSON.parse(existingData);
+              const content = obj.Tili;
+              // Go through all account numbers
+              content.forEach(function(number){
+                const existingNumbers = Object.keys(number);
+                console.log("Number to compare: " + numberToCompare);
+                console.log("existing Numbers: " + existingNumbers);
+                if (numberToCompare.toString == existingNumbers.toString) {
+                  console.log("Number already exists!")
+                  // TODO push to existing account
+                }
+                else {
+                  console.log("Number doesn't match!")
+                  obj.Tili.push(contentParsed);
+                }
+              })
               console.log(obj);
               fs.writeFile(
                 "output.json",
@@ -181,16 +190,6 @@ class Parser extends Component {
               );
             }
           });
-
-          /*
-        fs.appendFile("output.json", jsonContent, 'utf8', function (err) {
-          if (err) {
-            console.log("An error occured while writing JSON Object to File.");
-            return console.log(err);
-          }
-          console.log("JSON file has been saved.");
-        });
-        */
         }
         // IF JSON DOES NOT EXIST
         // SAVE JSON
@@ -272,6 +271,5 @@ class Parser extends Component {
 export default Parser;
 
 // TODO
-// Separate appending to its own function
 // Append under existing account number
 // check file suitability
