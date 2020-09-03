@@ -86,7 +86,7 @@ class Parser extends Component {
 
       var transactionObject = { "Kirjauspäivä":arrayFilter[0], "Arvopäivä":arrayFilter[4], "Maksupäivä":"", "Määrä":arrayFilter[1], "Saaja/Maksaja":arrayFilter[5].replace(/\s+/g,' ').trim(), 
       "Tilinumero":arrayFilter[6], "BIC":arrayFilter[8], "Tapahtuma":arrayFilter[2].replace(/"/g,"").trim(), // includes reference number, unsure which one so kept here
-      "Viite":"", "Maksajan viite:":"", "Viesti":messageString, "Kortinnumero":"", "Kuitti":"" }
+      "Viite":"", "Maksajan viite":"", "Viesti":messageString, "Kortinnumero":"", "Kuitti":"" }
   
       transactionArray.push(transactionObject);
 
@@ -156,23 +156,39 @@ class Parser extends Component {
               console.log(err);
             } else {
               // TODO if account exists
-              const numberToCompare = Object.keys(accountObject);
+              const numberToCompare = Object.keys(accountObject)[0];
               const obj = JSON.parse(existingData);
               const content = obj.Tili;
+              //const content3 = Object.keys(content2);
               // Go through all account numbers
-              content.forEach(function(number){
-                const existingNumbers = Object.keys(number);
-                console.log("Number to compare: " + numberToCompare);
-                console.log("existing Numbers: " + existingNumbers);
-                if (numberToCompare.toString == existingNumbers.toString) {
-                  console.log("Number already exists!")
-                  // TODO push to existing account
-                }
+              console.log("Object.values(content).map(value => console.log(value)): ");
+              const map1 = Object.values(content).map(value => value);
+              console.log(Object.values(map1));
+              console.log("numberToCompare: " + numberToCompare);
+
+              let skweee = 0;
+              while (skweee <= Object.keys(content).length) {
+                console.log(Object.keys(content)[skweee]);
+                if (content[skweee] == numberToCompare) {
+                  console.log("they are the same!")
+                  break;
+                } 
                 else {
                   console.log("Number doesn't match!")
-                  obj.Tili.push(contentParsed);
+                  skweee++;
                 }
-              })
+              }
+
+              if (Object.values(map1).includes(numberToCompare)) {
+                // Object.values(obj.Tili).includes(Object.keys(accountObject)[0])
+                console.log("Number already exists!")
+                // TODO push to existing account
+              }
+              else {
+                console.log("Number doesn't match!")
+              }
+
+              obj.Tili.push(contentParsed);
               console.log(obj);
               fs.writeFile(
                 "output.json",
