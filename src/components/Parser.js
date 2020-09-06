@@ -282,3 +282,6 @@ export default Parser;
 
 // TODO
 // check file suitability
+// add two more key - value pairs: Category: "", IsCategorized: false
+// check existing categories on upload 
+// add category automatically if transactionMessage added to category array: Groceries: ["SALE KORTEPOHJA", "PRISMA SEPPÄLÄ"]. IsCategorized: true
