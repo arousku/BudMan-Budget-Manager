@@ -6,6 +6,6 @@ BudMan budget manager application for Nordea and OP bank accounts is a React app
 
 ## TODO
 
-- Actual GUI
+- GUI
 - Graphs
 - Categorization
